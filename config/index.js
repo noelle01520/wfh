@@ -360,6 +360,8 @@ const config = {
         ].filter(x => x != null),
 
         plugins: [
+          // add the glamor/babel plugin
+          'glamor/babel',
           // Required to support react hot loader.
           mode === 'development'
             ? 'react-hot-loader/babel'

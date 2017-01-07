@@ -7,6 +7,7 @@ import { ServerRouter, createServerRenderContext } from 'react-router';
 import { Provider } from 'react-redux';
 import { CodeSplitProvider, createRenderContext } from 'code-split-component';
 import Helmet from 'react-helmet';
+import { renderStaticOptimized } from 'glamor/server';
 import generateHTML from './generateHTML';
 import DemoApp from '../../../shared/components/DemoApp';
 import runTasksForLocation from '../../../shared/routeTasks/runTasksForLocation';
@@ -56,16 +57,21 @@ function reactApplicationMiddleware(request: $Request, response: $Response) {
     // to query which chunks/modules were used during the render process.
     const codeSplitContext = createRenderContext();
 
-    // Create our application and render it into a string.
-    const reactAppString = renderToString(
-      <CodeSplitProvider context={codeSplitContext}>
-        <ServerRouter location={request.url} context={reactRouterContext}>
-          <Provider store={store}>
+    // Create our React application and render it into a string using the glamor
+    // provided helper as a wrapper to ensure that we get back the required
+    // glamor state..
+    const { html: reactAppString, css, ids } = renderStaticOptimized(() =>
+      renderToString(
+        <CodeSplitProvider context={codeSplitContext}>
+          <ServerRouter location={request.url} context={reactRouterContext}>
+            <Provider store={store}>
             <DemoApp />
-          </Provider>
-        </ServerRouter>
-      </CodeSplitProvider>,
+            </Provider>
+          </ServerRouter>
+        </CodeSplitProvider>,
+      ),
     );
+
 
     // Generate the html response.
     const html = generateHTML({
@@ -84,6 +90,11 @@ function reactApplicationMiddleware(request: $Request, response: $Response) {
       // Provide the redux store state, this will be bound to the window.__APP_STATE__
       // so that we can rehydrate the state on the client.
       initialState: getState(),
+      // The glamor state representing this request.
+      glamor: {
+        css,
+        ids,
+      },
     });
 
     // Get the render result from the server render context.

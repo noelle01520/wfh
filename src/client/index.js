@@ -4,11 +4,11 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
+import { rehydrate } from 'glamor';
 import { CodeSplitProvider, rehydrateState } from 'code-split-component';
 import { Provider } from 'react-redux';
 import configureStore from '../shared/redux/configureStore';
 import ReactHotLoader from './components/ReactHotLoader';
-import DemoApp from '../shared/components/DemoApp';
 import TaskRoutesExecutor from './components/TaskRoutesExecutor';
 
 // Get the DOM Element that will host our React application.
@@ -19,10 +19,16 @@ const store = configureStore(
   // Server side rendering would have mounted our state on this global.
   window.__APP_STATE__, // eslint-disable-line no-underscore-dangle
 );
+// This rehydrates glamor with the state from the server side render.
+// NOTE: This has to run before any code that defines any styles, which is why
+// we require the DemoApp component after this has run.
+rehydrate(window._glam); // eslint-disable-line no-underscore-dangle
+
+const DemoApp = require('../shared/components/DemoApp').default;
 
 function renderApp(TheApp) {
   // We use the code-split-component library to provide us with code splitting
-  // within our application.  This library supports server rendered applications,
+  // within our application. This library supports server rendered applications,
   // but for server rendered applications it requires that we rehydrate any
   // code split modules that may have been rendered for a request.  We use
   // the provided helper and then pass the result to the CodeSplitProvider

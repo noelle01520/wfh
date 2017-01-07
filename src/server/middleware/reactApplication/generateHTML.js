@@ -37,10 +37,11 @@ type Args = {
   nonce: string,
   helmet?: Head,
   codeSplitState?: { chunks: Array<string>, modules: Array<string> },
+  glamor? : { css: string, ids: any },
 };
 
 export default function generateHTML(args: Args) {
-  const { reactAppString, initialState, nonce, helmet, codeSplitState } = args;
+  const { reactAppString, initialState, nonce, helmet, codeSplitState, glamor } = args;
 
   // The chunks that we need to fetch the assets (js/css) for and then include
   // said assets as script/style tags within our html.
@@ -79,6 +80,7 @@ export default function generateHTML(args: Args) {
         ${helmet ? helmet.link.toString() : ''}
         ${styleTags(assetsForRender.css)}
         ${helmet ? helmet.style.toString() : ''}
+        <style>${glamor ? glamor.css : ''}</style>
       </head>
       <body>
         <div id='app'>${reactAppString || ''}</div>
@@ -119,6 +121,10 @@ export default function generateHTML(args: Args) {
             && config.bundles.client.devVendorDLL.enabled
             ? scriptTag(`${config.bundles.client.webPath}${config.bundles.client.devVendorDLL.name}.js`)
             : ''
+        }
+        ${glamor
+           ? inlineScript(`window._glam=${serialize(glamor.ids)};`)
+           : ''
         }
         ${scriptTags(assetsForRender.js)}
         ${helmet ? helmet.script.toString() : ''}
